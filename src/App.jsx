@@ -7,10 +7,11 @@ import { Timeline } from '@xzdarcy/react-timeline-editor';
 const App = () => {
 
   const [src, setSrc] = useState("");
+  const [videoLength, setVideoLength] = useState(300);
 
   const playerRef = useRef();
 
-  const handleChange = (event) => {
+  const handleAddVideo = (event) => {
     try {
       const file = event.target.files[0];
       setSrc(URL.createObjectURL(file));
@@ -23,6 +24,16 @@ const App = () => {
     if (timelineRef.current) {
       autoScroll(state)
     }
+  };
+
+  // Set timeline length
+  const handleOnReady = () => {
+    const duration = playerRef.current.getDuration();
+    let data = [...mockData];
+    data[0].actions[0]['start'] = duration - 1;
+    data[0].actions[0]['end'] = duration;
+    setMockData(data);
+    setVideoLength(duration);
   };
 
   // Set the timeline position to show the cursor
@@ -49,7 +60,7 @@ const App = () => {
         {
           id: "endOfTimeline",
           start: 499.9,
-          end: 500,
+          end: 300,
           effectId: "effect1",
         }
       ],
@@ -113,7 +124,7 @@ const App = () => {
       {src === '' ||
         <>
           <div className="video">
-            <ReactPlayer ref={playerRef} url={src} muted controls onProgress={handleProgress} onPause={onPause} onPlay={onPlay} height="50%" width="auto" /> 
+            <ReactPlayer ref={playerRef} url={src} muted controls onReady={handleOnReady} onProgress={handleProgress} onPause={onPause} onPlay={onPlay} height="50%" width="auto" /> 
           </div>
           <div className="video-controls">
             {/* <button onClick={showTimestamp}>Show Current Timestamp</button><span><u>Current timestamp:</u> <b>{time}</b></span> */}
@@ -129,7 +140,7 @@ const App = () => {
         effects={mockEffect}
         onCursorDragEnd={(time) => onTimeLineChange(time)}
         style={{ height: `150px`, width: '100%' }}
-        maxScaleCount={500}
+        maxScaleCount={videoLength}
         scale={1}
         autoScroll={true}
         onChange={() => {}}
@@ -145,7 +156,7 @@ const App = () => {
 
       {src !== '' ||
         <div className="video-controls">
-          <input type="file" onChange={handleChange} />
+          <input type="file" onChange={handleAddVideo} />
         </div>
       }
     </>    

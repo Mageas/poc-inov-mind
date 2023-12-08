@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import ReactPlayer from "react-player";
 
 import { Timeline } from '@xzdarcy/react-timeline-editor';
@@ -21,6 +21,10 @@ const App = () => {
   };
 
   const handleProgress = (state) => {
+    console.log(timelineRef.current.getTime())
+    console.log(playerRef.current.getCurrentTime())
+    console.log(mockData)
+
     if (timelineRef.current) {
       autoScroll(state)
     }
@@ -38,17 +42,28 @@ const App = () => {
 
   // Set the timeline position to show the cursor
   const autoScroll = (state) => {
-    const timelineWidth = timelineRef.current.target.clientWidth;
-    const timelineCursorPosition = timelineRef.current.target.lastChild.offsetLeft;
+    if (!playerRef.current.player.isPlaying) {
+      return;
+    }
 
-    const timePosition = state.playedSeconds * 160;
-    const scrollPosition = timePosition;
-    if (timelineCursorPosition > (timelineWidth - 160)) {
-      timelineRef.current.setScrollLeft(scrollPosition);  
-    } else if (timelineCursorPosition < 0) {
+    const timelineWidth = timelineRef.current.target.clientWidth;
+    const timelineCursorPosition = Math.abs(timelineRef.current.target.lastChild.offsetLeft);
+
+    const scrollPosition = timelineRef.current.getTime() * 160;
+
+    if (timelineCursorPosition > (timelineWidth - 160) || timelineCursorPosition < 0) {
+      playerRef.current.getInternalPlayer().pause();
       timelineRef.current.setScrollLeft(scrollPosition);
+      playerRef.current.getInternalPlayer().play();    
     }
   }
+
+  // useEffect(() => {
+  //   if (playerRef.current && timelineRef.current) {
+  //     const currentTime = playerRef.current.getCurrentTime();
+  //     timelineRef.current.setTime(currentTime);
+  //   }
+  // }, [playerRef?.current?.getCurrentTime()]);  
 
   const [mockData, setMockData] = useState([
     // Il faut ajouter un element de fin non modifiable pour la frise
@@ -119,12 +134,20 @@ const App = () => {
     playerRef.current.getInternalPlayer().play();
   }
 
+  const handleSeek = () => {
+    console.log('seek')
+    // onPause()
+    // onPlay()
+    // playerRef.current.getInternalPlayer().pause();
+    // playerRef.current.getInternalPlayer().play();  
+  }
+
   return (
     <>
       {src === '' ||
         <>
           <div className="video">
-            <ReactPlayer ref={playerRef} url={src} muted controls onReady={handleOnReady} onProgress={handleProgress} onPause={onPause} onPlay={onPlay} height="50%" width="auto" /> 
+            <ReactPlayer ref={playerRef} url={src} muted controls onSeek={handleSeek} onReady={handleOnReady} onProgress={handleProgress} onPause={onPause} onPlay={onPlay} height="50%" width="auto" /> 
           </div>
           <div className="video-controls">
             {/* <button onClick={showTimestamp}>Show Current Timestamp</button><span><u>Current timestamp:</u> <b>{time}</b></span> */}
@@ -142,7 +165,7 @@ const App = () => {
         style={{ height: `150px`, width: '100%' }}
         maxScaleCount={videoLength}
         scale={1}
-        autoScroll={true}
+        // autoScroll={true}
         onChange={() => {}}
         // getActionRender={(action) => {
         //   if (action.id === 'action10') {
